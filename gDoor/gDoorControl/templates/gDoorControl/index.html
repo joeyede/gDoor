@@ -1,0 +1,63 @@
+{% extends "gDoorControl/base.html" %}
+{% load static %}
+
+{% block title %}
+<title>Garage Door Control</title>
+{% endblock title %}
+
+{% block content %}
+
+
+<div class="px-4 py-5 my-5 text-center">
+  <img id='door_status_img' class="d-block mx-auto mb-4" src="{% static 'gDoorControl/images/GarageGreen.gif' %}"
+    alt="Door is Closed!">
+  <h1 class="display-5 fw-bold">Garage Door</h1>
+  <div class="col-lg-6 mx-auto">
+    <p class="lead mb-4">Welcome to Garage door control central!</p>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+      <button id='toggle_door' type="button" class="btn btn-primary btn-lg px-4 gap-3">Toggle Door</button>
+    </div>
+  </div>
+</div>
+
+
+{% endblock content %}
+
+{% block javascript %}
+<script>
+  document.getElementById("toggle_door").addEventListener("click", function () {
+    updateDoorState();
+
+  });
+
+  function updateDoorState() {
+    fetch("{% url 'getDoorState' %}", {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    })
+      .then(response => {
+        return response.json()
+      })
+      .then(data => {
+        let state = data.state;
+        console.error("Got: " + state );
+        let pic = document.getElementById("door_status_img");
+        if (state == "Closed") {
+           pic.src = "{% static 'gDoorControl/images/GarageGreen.gif' %}";
+        } else if (state == "Part-Open") {
+          pic.src = "{% static 'gDoorControl/images/GarageQuestion.gif' %}";
+        } else if (state == "Open") {
+          pic.src = "{% static 'gDoorControl/images/GarageRed.gif' %}";
+        } else {
+          let err = 'Invalid Door state!'
+          console.error(err);
+          throw err; 
+        }
+      })
+
+
+  }
+</script>
+{% endblock javascript %}
