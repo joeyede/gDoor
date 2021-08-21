@@ -1,5 +1,6 @@
-import datetime
-import RPi.GPIO as GPIO
+from datetime import datetime, timedelta
+from unittest.mock import Mock
+
 from enum import Enum, unique, IntEnum
 import logging
 import time
@@ -10,7 +11,30 @@ import time
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
-lastToggle  = datetime.now()-datetime.timedelta(seconds=5)
+lastToggle  = datetime.now() - timedelta(seconds=5)
+
+class PinID(IntEnum):
+    CLOSED = 16
+    OPEN = 18
+    DOOR_TRIGGER = 7
+
+try:
+    import RPi.GPIO as GPIO
+    
+except ImportError:
+    logger.warning("RPi.GPIO Import failed.  This is normal only if not on RPi Platform!")
+
+    # This section setups Mocking for testing on Non Raspberi Pi enviroment 
+    GPIO = Mock()
+    def inputMock(id):
+        if id == PinID.CLOSED: return GPIO.HIGH
+        if id == PinID.OPEN: return GPIO.LOW
+        return GPIO.UNKNOWN
+    
+    GPIO.input.side_effect  = inputMock
+    # End mocking section 
+  
+
 
 @unique
 class DoorState(Enum):
@@ -23,10 +47,7 @@ class DoorState(Enum):
         return self.value
 
 
-class PinID(IntEnum):
-    CLOSED = 16
-    OPEN = 18
-    DOOR_TRIGGER = 7
+
 
 
 def TriggerDoor():
@@ -35,7 +56,7 @@ def TriggerDoor():
     Return: True if door actualy TriggerDoor. 
     """
     global lastToggle
-    if  datetime.now() - lastToggle < datetime.timedelta(seconds=2) :
+    if  datetime.now() - lastToggle < timedelta(seconds=2) :
         logger.info('Toggle To Fast')
         return False
 
@@ -46,6 +67,7 @@ def TriggerDoor():
 
 
 def getDoorState():
+    
     if GPIO.input(PinID.CLOSED) == GPIO.HIGH and GPIO.input(PinID.OPEN) == GPIO.HIGH :
         return DoorState.PART_OPEN
     elif GPIO.input(PinID.CLOSED) == GPIO.LOW and GPIO.input(PinID.OPEN) == GPIO.HIGH :
@@ -56,9 +78,14 @@ def getDoorState():
         logger.error("Invalid door State")
         return DoorState.SENSOR_ERROR
 
+def registerForChange(callback):
+    GPIO.add_event_detect(PinID.CLOSED, GPIO.BOTH, callback=callback,bouncetime=300)
+    GPIO.add_event_detect(PinID.OPEN, GPIO.BOTH, callback=callback,bouncetime=300)
+    
+
+
 def _UnsafeTriggerDoor():
     GPIO.output(PinID.DOOR_TRIGGER, GPIO.HIGH)
     time.sleep(1)
     GPIO.output(PinID.DOOR_TRIGGER, GPIO.LOW)
-    time.sleep(2) 
 

@@ -9,7 +9,7 @@
 
 
 <div class="px-4 py-5 my-5 text-center">
-  <img id='door_status_img' class="d-block mx-auto mb-4" src="{% static 'gDoorControl/images/GarageGreen.gif' %}"
+  <img id='door_status_img' class="d-block mx-auto mb-4" width="369px" height="369px" src="{% static 'gDoorControl/images/GarageGreen.gif' %}"
     alt="Door is Closed!">
   <h1 class="display-5 fw-bold">Garage Door</h1>
   <div class="col-lg-6 mx-auto">
@@ -20,16 +20,74 @@
   </div>
 </div>
 
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+  <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto">Door Toggled</strong>
+      <small><div id=timeStamp></div></small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id='toast-body'>
+    </div>
+  </div>
+</div>
 
 {% endblock content %}
 
 {% block javascript %}
+
 <script>
-  document.getElementById("toggle_door").addEventListener("click", function () {
+
+  toggleDoorBtn = document.getElementById("toggle_door");
+  toggleDoorBtn.addEventListener("click", function () {
+    console.info("toggled")
+    toggleDoor();
     updateDoorState();
 
+    // Disable button for 2 sec so it dosn't get clicked to many times fast.
+    toggleDoorBtn.disabled = true;
+    setTimeout(()=> {toggleDoorBtn.disabled = false} , 2000)
+    
   });
 
+  setInterval(() => {
+    updateDoorState();
+  }, 5000);
+
+  function showToast(msg) {
+    const toastEl = document.getElementById('liveToast');
+    const ts = new Date();
+    document.getElementById('timeStamp').innerHTML = ts.toLocaleTimeString();
+    document.getElementById('toast-body').innerHTML = msg;
+
+    const toast = new bootstrap.Toast(toastEl, []);
+    toast.show();
+  }
+
+  function toggleDoor() {
+    fetch("{% url 'toggleDoor' %}", {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    })
+      .then(response => {
+        console.debug("response")
+        return response.json()
+      })
+      .then(data => {
+        console.debug("toasting")
+
+        showToast(data.toggled);
+      })
+      .catch(error => {
+        console.error("Fetch Fail: " + error);
+        showToast( 'Toggle FAILED!');
+      })
+
+
+
+  }
   function updateDoorState() {
     fetch("{% url 'getDoorState' %}", {
       headers: {
@@ -42,19 +100,21 @@
       })
       .then(data => {
         let state = data.state;
-        console.error("Got: " + state );
+        console.debug("Got: " + state );
         let pic = document.getElementById("door_status_img");
         if (state == "Closed") {
            pic.src = "{% static 'gDoorControl/images/GarageGreen.gif' %}";
         } else if (state == "Part-Open") {
           pic.src = "{% static 'gDoorControl/images/GarageQuestion.gif' %}";
-        } else if (state == "Open") {
+        } else if (state == "Fully-Open") {
           pic.src = "{% static 'gDoorControl/images/GarageRed.gif' %}";
         } else {
           let err = 'Invalid Door state!'
           console.error(err);
           throw err; 
         }
+      }).catch(error => {
+        console.error("Fetch Fail: " + error);
       })
 
 

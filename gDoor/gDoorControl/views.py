@@ -1,5 +1,6 @@
-from gDoor.gDoorControl.RaspberryPiControl import RaspberryPiControl
+#from gDoor.gDoorControl.RaspberryPiControl import RaspberryPiControl
 
+from .RaspberryPiControl  import PiControl
 from random import randrange
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
@@ -23,16 +24,30 @@ def index(request):
 
 @login_required
 def toggleDoor(request):
-    toggled = RaspberryPiControl.TriggerDoor()
-    url = reverse('/', kwargs={'toggled': str(toggled)})
-    return HttpResponseRedirect(url)
-#    return HttpResponseRedirect('/')
+    toggled = PiControl.TriggerDoor()
+    if toggled:
+        resp = 'Door Toggled Sucessfuly'
+    else:
+        resp = "Door did't toggle - to fast? <br> Try again in 3 sec."
+
+    data = {
+            'toggled': resp, 
+    }
+    return JsonResponse(data)
 
 @login_required
 def getDoorState(request):
-    stat= RaspberryPiControl.getDoorState
+    stat= PiControl.getDoorState()
 
     data = {
             'state': str(stat), 
     }
     return JsonResponse(data)
+
+def main():
+    stat= PiControl.getDoorState()
+    print(f"stat: {stat}")
+
+
+if __name__ == "__main__":
+   main()
