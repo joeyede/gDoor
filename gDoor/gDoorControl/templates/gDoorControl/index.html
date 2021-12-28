@@ -37,7 +37,7 @@
 {% block javascript %}
 
 <script>
-
+  window.onload = updateDoorState();
   toggleDoorBtn = document.getElementById("toggle_door");
   toggleDoorBtn.addEventListener("click", function () {
     console.info("toggled")
