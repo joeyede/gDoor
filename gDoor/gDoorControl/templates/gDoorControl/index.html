@@ -9,8 +9,8 @@
 
 
 <div class="px-4 py-5 my-5 text-center">
-  <img id='door_status_img' class="d-block mx-auto mb-4" width="369px" height="369px" src="{% static 'gDoorControl/images/GarageGreen.gif' %}"
-    alt="Door is Closed!">
+  <img id='door_status_img' class="d-block mx-auto mb-4" width="369px" height="369px"
+    src="{% static 'gDoorControl/images/GarageGreen.gif' %}" alt="Door is Closed!">
   <h1 class="display-5 fw-bold">Garage Door</h1>
   <div class="col-lg-6 mx-auto">
     <p class="lead mb-4">Welcome to Garage door control central!</p>
@@ -24,7 +24,9 @@
   <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="toast-header">
       <strong class="me-auto">Door Toggled</strong>
-      <small><div id=timeStamp></div></small>
+      <small>
+        <div id=timeStamp></div>
+      </small>
       <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
     <div class="toast-body" id='toast-body'>
@@ -32,27 +34,63 @@
   </div>
 </div>
 
+
 {% endblock content %}
 
 {% block javascript %}
 
 <script>
+  var  HOME_LAT = parseFloat("{{location.home_lat}}");
+  var  HOME_LONG = parseFloat("{{location.home_long}}");
+
   window.onload = updateDoorState();
   toggleDoorBtn = document.getElementById("toggle_door");
   toggleDoorBtn.addEventListener("click", function () {
-    console.info("toggled")
-    toggleDoor();
-    updateDoorState();
 
     // Disable button for 2 sec so it dosn't get clicked to many times fast.
     toggleDoorBtn.disabled = true;
-    setTimeout(()=> {toggleDoorBtn.disabled = false} , 2000)
-    
+    setTimeout(() => { toggleDoorBtn.disabled = false }, 2000)
+    toggleDoorWithLocatoinCheck();
   });
 
   setInterval(() => {
     updateDoorState();
   }, 5000);
+
+  function toggleDoorWithLocatoinCheck() {
+    if (!navigator.geolocation) {
+      // not supported or declined
+      safeToggleDoor("Can't verify you are close to door! ")
+      return ;
+    }
+
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const lat  = pos.coords.latitude;
+      const long = pos.coords.longitude;
+      const dist = getDistanceFromLatLonInKm(lat,long,HOME_LAT,HOME_LONG);
+      console.log("Got Locatoin lat: %f , long %f , dist:  %f .",lat,long,dist);
+    
+      const THERESHOLD = 0.07 // 70 m in KM
+      if (Math.abs(dist) < THERESHOLD) {
+        // close enough to home just do it.
+        unsafeToggleDoor();
+
+      } else{
+        safeToggleDoor("You are NOT close to door! ")
+
+      }
+
+    },() => {safeToggleDoor("Can't verify you are close to door! ");})
+  }
+
+  function safeToggleDoor(msg) {
+    if(!confirm(msg + 'Are you sure you want to toggle it?')) {
+        return;
+    }
+
+    unsafeToggleDoor();
+
+  }
 
   function showToast(msg) {
     const toastEl = document.getElementById('liveToast');
@@ -64,7 +102,7 @@
     toast.show();
   }
 
-  function toggleDoor() {
+  function unsafeToggleDoor() {
     fetch("{% url 'toggleDoor' %}", {
       headers: {
         'Accept': 'application/json',
@@ -79,15 +117,38 @@
         console.debug("toasting")
 
         showToast(data.toggled);
+        updateDoorState();
+
       })
       .catch(error => {
         console.error("Fetch Fail: " + error);
-        showToast( 'Toggle FAILED!');
+        showToast('Toggle FAILED!');
+        updateDoorState();
+
       })
 
-
-
   }
+
+  // From https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula/27943#27943
+  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+
+    var R = 6371; // Radius of the earth in km
+    var dLat = deg2rad(lat2 - lat1);  // deg2rad below
+    var dLon = deg2rad(lon2 - lon1);
+    var a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2)
+      ;
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    var d = R * c; // Distance in km
+    return d;
+  }
+
+  function deg2rad(deg) {
+    return deg * (Math.PI / 180)
+  }
+
   function updateDoorState() {
     fetch("{% url 'getDoorState' %}", {
       headers: {
@@ -100,10 +161,10 @@
       })
       .then(data => {
         let state = data.state;
-        console.debug("Got: " + state );
+        console.debug("Got: " + state);
         let pic = document.getElementById("door_status_img");
         if (state == "Closed") {
-           pic.src = "{% static 'gDoorControl/images/GarageGreen.gif' %}";
+          pic.src = "{% static 'gDoorControl/images/GarageGreen.gif' %}";
         } else if (state == "Part-Open") {
           pic.src = "{% static 'gDoorControl/images/GarageQuestion.gif' %}";
         } else if (state == "Fully-Open") {
@@ -111,12 +172,11 @@
         } else {
           let err = 'Invalid Door state!'
           console.error(err);
-          throw err; 
+          throw err;
         }
       }).catch(error => {
         console.error("Fetch Fail: " + error);
       })
-
 
   }
 </script>

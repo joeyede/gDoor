@@ -1,0 +1,98 @@
+{% extends "gDoorControl/base.html" %}
+{% load static %}
+
+{% block title %}
+<title>Garage Door Control</title>
+{% endblock title %}
+
+{% block content %}
+<div class="px2 py-2 my-2 text-left">
+    {% if locations %}
+    <div class="container-fluid">
+            <h3 >
+                Current Home Location:
+            </h3>
+ 
+        {% for loc in locations %}
+        <div class="row">
+            <div class="col-sm">
+                <div class="p-3 mb-2 bg-info text-white">
+                    Lat: {{ loc.home_lat }}
+                </div>
+            </div>
+            <div class="col-sm" bg-info>
+                <div class="p-3 mb-2 bg-info text-white">
+                    Long: {{ loc.home_long }}
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <p>No Home location Set!</p>
+    {% endif %}
+</div>
+<div class="px-2 py-2 my-2 text-left">
+    <h3 id="detected" >
+        Detected Home Location:
+    </h3>
+    
+    <form action="{% url 'updateHomeLocation' %}" method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <label for="curlat">Lat:</label>
+                    <input type="text" class="form-control" id="curlat" name="curlat" readonly><br><br>
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-group">
+                    <label for="curlong">Long:</label>
+                    <input type="text" class="form-control" id="curlong" name="curlong" readonly><br><br>
+                </div>
+            </div>
+        </div>
+        <input type="submit" class="btn btn-primary" id="submit" value="Update Home Location">
+    </form>
+
+
+</div>
+
+{% endblock content %}
+
+{% block javascript %}
+<script>
+
+    var cur_lat = 0;
+    var cur_long = 0;
+
+    window.onload = updateCurrentLocatoin();
+    function updateCurrentLocatoin() {
+        if (!navigator.geolocation) {
+            // not supported or declined
+            updateNoPos();
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition((pos) => {
+            cur_lat = pos.coords.latitude;
+            cur_long = pos.coords.longitude;
+            document.getElementById('curlat').value = cur_lat;
+            document.getElementById('curlong').value = cur_long;
+
+            console.log("Got Locatoin lat: %f , long %f .", cur_lat, cur_long);
+
+        }, updateNoPos)
+    } 
+
+    function updateNoPos() {
+        document.getElementById('detected').innerHTML = "Can't get current location! ";
+        document.getElementById('detected').style.color = "red";
+
+        document.getElementById('submit').disabled  = true;
+    }
+</script>
+{% endblock javascript %}
