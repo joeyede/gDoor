@@ -12,39 +12,61 @@
 
 
   <!-- Bootstrap core CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
 
   {% load static %}
 
   <link rel="stylesheet" type="text/css" href="{% static 'gDoorControl/style.css' %}">
-  <link rel="shortcut icon" type="image/png" href="{% static 'gDoorControl/images/favicon.ico' %}"/>
-  
+  <link rel="shortcut icon" type="image/png" href="{% static 'gDoorControl/images/favicon.ico' %}" />
+
 </head>
 
 <body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between   ">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <div class="navbar-nav">
+        <a class="nav-item nav-link active" href="/">Home</a>
+        {% if perms.gDoorControl.change_homelocations %}
+        <a class="nav-item nav-link" href="{% url 'homeLocation' %}" class="nav-link">Set Door Location</a></li>
+      {% endif %}
+      </div>
+    </div>  
+    <div>
+      <span class="navbar-text "> User: {{ user.username }}  </span>
+    <a class="navbar-nav mx-3  " href="{% url 'logout' %} ">logout</a>
+  </div>
+  </nav>
   <main>
-    <div class="container">
+    
+
+    <!-- <div class="container">
       <header class="d-flex flex-wrap justify-content-left py-3 mb-4 border-bottom">
-  
+
         <ul class="nav nav-pills ">
-          <li class="nav-item"><a href="/" class="nav-link active" align-left aria-current="page">Home</a></li>
-          <!-- <li class="nav-item"><a href="#" class="nav-link">Features</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">Pricing</a></li>  -->
-          <li class="nav-item"><a href="{% url 'homeLocation' %}" class="nav-link">Set Door Location</a></li> 
-          <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link">Logout</a></li>
+          <li class="nav-item"><a href="/" class="nav-link" align-left aria-current="page">Home</a></li>
+
+          {% if perms.gDoorControl.change_homelocations %}
+            <li class="nav-item"><a href="{% url 'homeLocation' %}" class="nav-link">Set Door Location</a></li>
+          {% endif %}
+         
+          <li class="nav-item"> <span class="navbar-text"> User: {{ user.username }} </span> </li>
+          <li class="nav-item"><a href="{% url 'logout' %}" margin-left:15px align-right
+              class="nav-link">Logout</a></li>
 
         </ul>
       </header>
-    </div>
-    {% block content %}{% endblock content %} 
+    </div> -->
+    {% block content %}{% endblock content %}
   </main>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
-  
-   {% block javascript %}
-   {% endblock javascript %}
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+
+  {% block javascript %}
+  {% endblock javascript %}
 </body>
+
 </html>
-
-
-
-

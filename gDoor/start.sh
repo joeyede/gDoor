@@ -16,7 +16,7 @@ if [ "${ENV}" != "dev" ]; then
     ${PYTHON} ${__dir}/manage.py collectstatic --noinput
 fi
 
-echo "Running migrations if any required"
+echo "Making migrations if any required"
 ${PYTHON} ${__dir}/manage.py makemigrations 
 
 

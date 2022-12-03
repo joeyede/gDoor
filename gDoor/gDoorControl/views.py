@@ -8,13 +8,15 @@ from django.http.response import HttpResponse
 from .RaspberryPiControl  import PiControl
 from random import randrange
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from datetime import datetime, timedelta
 from django.http import JsonResponse
+from django.utils import timezone
+from django.contrib.auth.models import Permission
 
-from .models import HomeLocations
+from .models import HomeLocations, DoorToggleRecord
 
 
 
@@ -38,6 +40,12 @@ def toggleDoor(request):
     toggled = PiControl.TriggerDoor()
     if toggled:
         resp = 'Door Toggled Sucessfuly'
+        DoorToggleRecord(
+            user = request.user, 
+            toggle_date = timezone.now(),
+            pre_toggle_door_state=str(PiControl.getDoorState())
+            ).save()
+
     else:
         resp = "Door did't toggle - to fast? <br> Try again in 3 sec."
 
@@ -57,6 +65,7 @@ def getDoorState(request):
 
 
 @login_required
+@permission_required('gDoorControl.change_homelocations', raise_exception=True)
 def homeLocation(request):
     locations = HomeLocations.objects.order_by('id')  # Only 1 home location
     context = {

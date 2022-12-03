@@ -2,5 +2,6 @@
     "python.pythonPath": "/usr/bin/python3.7",
     "python.analysis.extraPaths": [
         "/c/Projects/tpbuilder/venv/lib/python3.7/site-packages/"
-    ]
+    ],
+    "python.formatting.provider": "black"
 }
